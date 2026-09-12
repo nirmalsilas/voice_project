@@ -1,163 +1,270 @@
-<a href="https://livekit.io/">
-  <img src="./.github/assets/livekit-mark.png" alt="LiveKit logo" width="100" height="100">
-</a>
+Voice Avatar Setup Guide
+This project is Harry's Buddy, a LiveKit personal teacher for Harry with an Anam video avatar and a local React web interface.
 
-# LiveKit Agents Starter - Python
+The browser opens directly into the voice-avatar room. It does not require a login. When the agent joins, Harry's Buddy greets Harry automatically.
 
-For the complete setup guide for the Python agent, Anam avatar, local token server, and React frontend, see [SETUP.md](SETUP.md).
+What This Project Contains
+my-agent/
+|-- src/agent.py                 Python voice agent and Anam integration
+|-- tests/test_agent.py          Agent evaluation tests
+|-- frontend/
+|   |-- src/App.tsx              React application and LiveKit room UI
+|   |-- src/index.css            Application styling
+|   |-- server/token.ts          Secure token creation and agent dispatch
+|   |-- vite.config.ts           Vite dev server and API proxy
+|   |-- package.json              Frontend dependencies and scripts
+|-- .env.local                  Local secrets; never commit this file
+|-- pyproject.toml              Python dependencies and tool configuration
+|-- uv.lock                     Locked Python dependency versions
+|-- Dockerfile                  Production agent container
+Requirements
+Install these tools on Windows:
 
-A complete starter project for building voice AI apps with [LiveKit Agents for Python](https://github.com/livekit/agents) and [LiveKit Cloud](https://cloud.livekit.io/).
+Python 3.10 through 3.14
+uv for Python environments and dependencies
+Node.js and npm for the web app
+A LiveKit Cloud project
+An Anam account, API key, and avatar ID
+Check the installations from PowerShell:
 
-The starter project includes:
+python --version
+uv --version
+node --version
+npm --version
+The project was developed with Python 3.14, Node.js 24, npm 11, and uv.
 
-- A simple voice AI assistant, ready for extension and customization
-- A voice AI pipeline built on [LiveKit Inference](https://docs.livekit.io/agents/models/inference), providing zero-configuration access to [models](https://docs.livekit.io/agents/models) from top labs
-  - Uses the fast, open-weight Gemma 4 31B model, [hosted by LiveKit](https://docs.livekit.io/agents/models/llm/livekit/) and tuned for optimal performance in voice AI, as the default LLM
-  - Uses Fish Audio S2.1 Pro for TTS, which renders the inline delivery markup that expressive mode relies on
-  - Supports more than 50 models from OpenAI, Cartesia, Deepgram, and other providers
-  - Access to a wide range of other models, including [Realtime models](https://docs.livekit.io/agents/models/realtime), through extensive plugin ecosystem
-- Expressive mode, enabled by default: the framework injects the TTS provider's markup guide into the LLM prompt, so the model emits inline delivery tags (emotion, pacing, non-verbal sounds) that the TTS renders and the transcript never shows
-- Eval suite based on the LiveKit Agents [testing & evaluation framework](https://docs.livekit.io/agents/start/testing/)
-- [LiveKit Turn Detector](https://docs.livekit.io/agents/logic/turns/turn-detector/), an end-of-turn model that listens to the user's audio directly, combining semantic understanding with acoustic cues for state-of-the-art accuracy across 14 languages
-- [Background voice cancellation](https://docs.livekit.io/transport/media/noise-cancellation/)
-- Deep session insights from LiveKit [Agent Observability](https://docs.livekit.io/deploy/observability/)
-- A Dockerfile ready for [production deployment to LiveKit Cloud](https://docs.livekit.io/deploy/agents/)
+Credentials
+LiveKit
+Create or open a project at LiveKit Cloud. Copy:
 
-This starter app is compatible with any [custom web/mobile frontend](https://docs.livekit.io/frontends/) or [telephony](https://docs.livekit.io/telephony/).
+Project WebSocket URL, for example wss://your-project.livekit.cloud
+API key
+API secret
+Anam
+Create an account at Anam Lab.
+Create an API key at Anam API Keys.
+Choose a stock avatar from the Anam Avatar Gallery, or create a custom avatar in Anam Lab.
+Copy the avatar ID.
+The avatar ID is passed to Anam as PersonaConfig.avatarId.
 
-## Using coding agents
+Environment File
+Create this file at the Python project root:
 
-This project is designed to work with coding agents like [Claude Code](https://claude.com/product/claude-code), [Cursor](https://www.cursor.com/), and [Codex](https://openai.com/codex/).
+C:\AI_Projects\voice\voice avatar\my-agent\.env.local
+Use this shape and replace every placeholder with a real value:
 
-For your convenience, LiveKit offers both a CLI and an [MCP server](https://docs.livekit.io/reference/developer-tools/docs-mcp/) that can be used to browse and search its documentation. The [LiveKit CLI](https://docs.livekit.io/intro/basics/cli/) (`lk docs`) works with any coding agent that can run shell commands. Install it for your platform:
+LIVEKIT_URL=wss://your-project.livekit.cloud
+LIVEKIT_API_KEY=your_livekit_api_key
+LIVEKIT_API_SECRET=your_livekit_api_secret
+ANAM_API_KEY=your_anam_api_key
+ANAM_AVATAR_ID=your_anam_avatar_id
+AVATAR_PROVIDER=simli
+Optional values:
 
-**macOS:**
+LIVEKIT_AGENT_NAME=my-agent
+FRONTEND_TOKEN_PORT=5174
+TTS_MODEL=fishaudio/s2.1-pro
+TTS_VOICE=fa4c9eb3dccc4806b382b40d61c6b10a
+SIMLI_API_KEY=your_simli_api_key
+SIMLI_FACE_ID=your_simli_face_id
+Do not add quotes unless the value itself requires them. Do not share this file or commit it. The repository ignores .env and .env.* files. On Windows, chmod is not needed.
 
-```console
-brew install livekit-cli
-```
+Change The Voice
+The voice is selected by TTS_MODEL and TTS_VOICE in .env.local. The current default is Fish Audio:
 
-**Linux:**
+TTS_MODEL=fishaudio/s2.1-pro
+TTS_VOICE=fa4c9eb3dccc4806b382b40d61c6b10a
+Replace TTS_VOICE with a voice ID supported by the selected LiveKit Inference TTS model. You can browse available providers and voices in the LiveKit TTS model documentation. Restart the Python agent after changing the value:
 
-```console
-curl -sSL https://get.livekit.io/cli | bash
-```
-
-**Windows:**
-
-```console
-winget install LiveKit.LiveKitCLI
-```
-
-The `lk docs` subcommand requires version 2.15.0 or higher. Check your version with `lk --version` and update if needed. Once installed, your coding agent can search and browse LiveKit documentation directly from the terminal:
-
-```console
-lk docs search "voice agents"
-lk docs get-page /agents/start/voice-ai-quickstart
-```
-
-See the [Using coding agents](https://docs.livekit.io/intro/coding-agents/) guide for more details, including MCP server setup.
-
-The project includes a complete [AGENTS.md](AGENTS.md) file for these assistants. You can modify this file to suit your needs. To learn more about this file, see [https://agents.md](https://agents.md).
-
-## Dev Setup
-
-Create a project from this template with the LiveKit CLI (recommended):
-
-```bash
-lk cloud auth
-lk agent init my-agent --template agent-starter-python
-```
-
-The CLI clones the template and configures your environment. Then follow the rest of this guide from [Run the agent](#run-the-agent).
-
-<details>
-<summary>Alternative: Manual setup without the CLI</summary>
-
-Clone the repository and install dependencies to a virtual environment:
-
-```console
-cd agent-starter-python
-uv sync
-```
-
-Sign up for [LiveKit Cloud](https://cloud.livekit.io/) then set up the environment by copying `.env.example` to `.env.local` and filling in the required keys:
-
-- `LIVEKIT_URL`
-- `LIVEKIT_API_KEY`
-- `LIVEKIT_API_SECRET`
-
-You can load the LiveKit environment automatically using the [LiveKit CLI](https://docs.livekit.io/intro/basics/cli/):
-
-```bash
-lk cloud auth
-lk app env --write --destination .env.local
-```
-
-</details>
-
-## Run the agent
-
-Run this command to speak to your agent directly in your terminal:
-
-```console
-uv run python src/agent.py console
-```
-
-To run the agent for use with a frontend or telephony, use the `dev` command:
-
-```console
 uv run python src/agent.py dev
-```
+Change The Avatar Provider
+Set the provider in .env.local:
 
-In production, use the `start` command:
+AVATAR_PROVIDER=anam
+Supported values are:
 
-```console
-uv run python src/agent.py start
-```
+anam: uses ANAM_API_KEY and ANAM_AVATAR_ID
+simli: uses SIMLI_API_KEY and SIMLI_FACE_ID
+For Simli, create an API key at Simli API keys and choose a face from Simli faces. Then configure:
 
-## Frontend & Telephony
+AVATAR_PROVIDER=simli
+SIMLI_API_KEY=your_simli_api_key
+SIMLI_FACE_ID=your_simli_face_id
+Restart the Python agent after changing the provider. The React frontend supports either provider automatically because both publish their video through LiveKit.
 
-Get started quickly with our pre-built frontend starter apps, or add telephony support:
+Install Dependencies
+Open PowerShell in the project directory:
 
-| Platform | Link | Description |
-|----------|----------|-------------|
-| **Web** | [`livekit-examples/agent-starter-react`](https://github.com/livekit-examples/agent-starter-react) | Web voice AI assistant with React & Next.js |
-| **iOS/macOS** | [`livekit-examples/agent-starter-swift`](https://github.com/livekit-examples/agent-starter-swift) | Native iOS, macOS, and visionOS voice AI assistant |
-| **Flutter** | [`livekit-examples/agent-starter-flutter`](https://github.com/livekit-examples/agent-starter-flutter) | Cross-platform voice AI assistant app |
-| **React Native** | [`livekit-examples/voice-assistant-react-native`](https://github.com/livekit-examples/voice-assistant-react-native) | Native mobile app with React Native & Expo |
-| **Android** | [`livekit-examples/agent-starter-android`](https://github.com/livekit-examples/agent-starter-android) | Native Android app with Kotlin & Jetpack Compose |
-| **Web Embed** | [`livekit-examples/agent-starter-embed`](https://github.com/livekit-examples/agent-starter-embed) | Voice AI widget for any website |
-| **Telephony** | [Documentation](https://docs.livekit.io/telephony/) | Add inbound or outbound calling to your agent |
+Set-Location "C:\AI_Projects\voice\voice avatar\my-agent"
+Install Python dependencies:
 
-For advanced customization, see the [complete frontend guide](https://docs.livekit.io/frontends/).
+uv sync
+This creates or updates .venv and installs the packages declared in pyproject.toml, including:
 
-## Tests and evals
+livekit-agents[anam]
+livekit-plugins-ai-coustics
+python-dotenv
+Development tools: pytest, pytest-asyncio, and ruff
+Install frontend dependencies:
 
-This project includes a complete suite of evals, based on the LiveKit Agents [testing & evaluation framework](https://docs.livekit.io/agents/start/testing/). To run them, use `pytest`.
+Set-Location frontend
+npm install
+The frontend installs these runtime packages:
 
-```console
+react and react-dom
+@livekit/components-react
+livekit-client
+express
+livekit-server-sdk
+cors
+dotenv
+The development packages include TypeScript, Vite, React types, Express types, and tsx.
+
+Run Locally
+Use three PowerShell terminals. Keep all three running.
+
+Terminal 1: Python agent
+uv run --directory "C:\AI_Projects\voice\voice avatar\my-agent" python src/agent.py dev
+A successful startup includes messages like:
+
+plugin registered ... livekit.plugins.anam
+registered worker ... agent_name: my-agent
+The dev command is currently supported by this project version. LiveKit also reports that lk agent dev is the newer CLI command.
+
+Terminal 2: Token and dispatch server
+Set-Location "C:\AI_Projects\voice\voice avatar\my-agent\frontend"
+npm run server
+Expected output:
+
+Token server listening on http://localhost:5174
+This server does two important things:
+
+Creates a short-lived LiveKit token for the browser.
+Explicitly dispatches the registered my-agent worker into the requested room.
+The LiveKit API secret is used only by this server and is never bundled into React.
+
+Terminal 3: React frontend
+Set-Location "C:\AI_Projects\voice\voice avatar\my-agent\frontend"
+npm run dev -- --host 127.0.0.1
+Open:
+
+http://127.0.0.1:5173/
+The app automatically requests a token and connects to the fixed voice-avatar room. No login or room form is required.
+
+User Flow
+The browser loads the React app.
+React requests /api/token?room=voice-avatar.
+The token server creates a guest identity and dispatches my-agent.
+The browser joins LiveKit with microphone audio enabled and camera disabled.
+The Python agent joins the same room.
+The Python agent starts the STT, LLM, TTS, turn detector, and noise cancellation pipeline.
+Anam creates a session and joins as anam-avatar-agent.
+The frontend renders only the Anam camera track, so the user's webcam cannot cover the avatar.
+The agent says: Hello, I am here. How can I help you today?
+Main Components
+Python agent
+src/agent.py configures:
+
+LLM: LiveKit Inference Gemma
+STT: AssemblyAI Universal
+TTS: Fish Audio
+Turn detection: LiveKit turn detector
+Noise cancellation: AI Coustics
+Avatar: Anam
+Greeting: Hi Harry, I am your Buddy. What would you like to learn today?
+The Anam integration uses:
+
+anam.AvatarSession(
+    persona_config=anam.PersonaConfig(
+        name="Voice Assistant",
+        avatarId=os.getenv("ANAM_AVATAR_ID"),
+    ),
+)
+React frontend
+frontend/src/App.tsx provides:
+
+Automatic connection on first load
+A child-friendly learning-room layout branded as Harry's Buddy
+An Anam-only video stage
+LiveKit audio playback
+End conversation and reconnect controls
+A fixed voice-avatar room
+Token server
+frontend/server/token.ts reads the root .env.local, creates a guest token, and uses AgentDispatchClient to dispatch my-agent into the room. Never move the API secret into a VITE_ environment variable or frontend source file.
+
+Validation Commands
+Build the frontend:
+
+Set-Location "C:\AI_Projects\voice\voice avatar\my-agent\frontend"
+npm run build
+Run frontend linting:
+
+npm run lint
+Check Python syntax and linting:
+
+Set-Location "C:\AI_Projects\voice\voice avatar\my-agent"
+uv run python -m py_compile src/agent.py
+uv run ruff check src/agent.py
+Run the Python evaluation suite:
+
 uv run pytest
-```
+The evaluation tests may call LiveKit-hosted models, so valid credentials and network access are required.
 
-## Using this template repo for your own project
+Troubleshooting
+The page does not open
+Confirm the Vite terminal shows:
 
-Once you've started your own project based on this repo, you should:
+Local: http://127.0.0.1:5173/
+If port 5173 is busy, Vite will select another port and print it in the terminal.
 
-1. **Check in your `uv.lock`**: This file is currently untracked for the template, but you should commit it to your repository for reproducible builds and proper configuration management. (The same applies to `livekit.toml`, if you run your agents in LiveKit Cloud)
+The page says it cannot connect
+Confirm the token server is running on port 5174 and that the three LiveKit variables exist in .env.local.
 
-2. **Remove the git tracking test**: Delete the "Check files not tracked in git" step from `.github/workflows/tests.yml` since you'll now want this file to be tracked. These are just there for development purposes in the template repo itself.
+The page is waiting for the avatar
+Check the Python agent terminal for all of these:
 
-3. **Add your own repository secrets**: You must [add secrets](https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-what-your-workflow-does/using-secrets-in-github-actions) for `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET` so that the tests can run in CI.
+plugin registered ... livekit.plugins.anam
+registered worker ... agent_name: my-agent
+received job request ... room: voice-avatar
+Anam session token created successfully
+Starting Anam engine session
+If received job request never appears, restart the token server and refresh the browser. The token endpoint performs the explicit agent dispatch.
 
-## Deploying to production
+If the Anam session token fails, check ANAM_API_KEY and ANAM_AVATAR_ID.
 
-This project is production-ready and includes a working `Dockerfile`. To deploy it to LiveKit Cloud or another environment, see the [deploying to production](https://docs.livekit.io/deploy/agents/) guide.
+The browser shows the user's camera
+The frontend intentionally sets video={false} and filters video to the anam-avatar-agent identity. Refresh the page after frontend changes and reconnect.
 
-## Self-hosted LiveKit
+The assistant speaks but the avatar is not visible
+The voice agent and avatar are separate LiveKit participants. Check the browser console and the Python logs for Anam session errors. Confirm that the frontend is connected to the same LiveKit project as the Python agent.
 
-You can also self-host LiveKit instead of using LiveKit Cloud. See the [self-hosting](https://docs.livekit.io/transport/self-hosting/local/) guide for more information. If you choose to self-host, you'll need to also use [model plugins](https://docs.livekit.io/agents/models/#plugins) instead of LiveKit Inference and will need to remove the [LiveKit Cloud noise cancellation](https://docs.livekit.io/transport/media/noise-cancellation/) plugin.
+Audio is delayed or empty
+LiveKit Inference services can temporarily return connection or quota errors. Restart the agent and try again. The turn detector can fall back to a local model when the cloud detector quota is exceeded.
 
-## License
+The agent command exits with code 1
+Run it from the project directory or use the absolute uv --directory form:
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+uv run --directory "C:\AI_Projects\voice\voice avatar\my-agent" python src/agent.py dev
+Read the final error lines. Common causes are missing environment variables, an invalid Anam key, or an invalid avatar ID.
+
+Stopping Everything
+Press Ctrl+C in each of the three running terminals:
+
+Vite frontend
+Token server
+Python agent
+Production Notes
+The local token server is intended for development. For production:
+
+Run the token endpoint behind HTTPS.
+Store LiveKit and Anam secrets in a managed secret store.
+Restrict CORS to the deployed frontend origin instead of allowing every origin.
+Use a production LiveKit agent deployment rather than the local dev command.
+Use a real authentication and authorization layer if rooms are private.
+Keep uv.lock and frontend/package-lock.json under version control for reproducible installs.
+Useful Links
+LiveKit Cloud
+LiveKit Agents for Python
+LiveKit Anam integration
+Anam Lab
+Anam avatar gallery
